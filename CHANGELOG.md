@@ -1,6 +1,20 @@
 # Changelog
 
 
+## v1.5.1
+
+[compare changes](https://github.com/unjs/upm/compare/v1.5.0...v1.5.1)
+
+### 🩹 Fixes
+
+- **web:** Skip listing a store the install never made ([0828a8c](https://github.com/unjs/upm/commit/0828a8c))
+- **dns:** Detect untouched default agent when node:http is loaded ([#42](https://github.com/unjs/upm/pull/42))
+
+### ❤️ Contributors
+
+- LuckTerence ([@LuckTerence](https://github.com/LuckTerence))
+- Pooya Parsa ([@pi0](https://github.com/pi0))
+
 ## v1.5.0
 
 [compare changes](https://github.com/unjs/upm/compare/v1.4.0...v1.5.0)
