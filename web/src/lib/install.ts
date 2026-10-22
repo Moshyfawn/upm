@@ -201,7 +201,8 @@ export function installInTab(
       }
     };
     list(PROJECT, "");
-    list(STORE.slice(0, -1), "~/.upm/store/");
+    // Made by its first write: an install that stored nothing has none.
+    if (node.fs.existsSync(STORE.slice(0, -1))) list(STORE.slice(0, -1), "~/.upm/store/");
     return { files, links, result, ms };
   });
   running = run.catch(() => {});
