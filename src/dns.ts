@@ -234,19 +234,40 @@ const decoder = new TextDecoder();
 /**
  * Our agent is one of undici's own `Agent` class with a `connect.lookup`; the class is read off
  * the default dispatcher undici makes for itself. A dispatcher that was there before — a host
- * process's own, whatever its class — is used instead: none is made, as with no `fetch` or a
- * runtime that keeps the dispatcher under another name.
+ * process's own, whatever its class — is used instead, unless it is undici's untouched default
+ * agent from an ESM `import "node:http"`: none is made, as with no `fetch` or a runtime that keeps
+ * the dispatcher under another name.
  */
 async function install(): Promise<void> {
   const global = globalThis as unknown as Record<symbol, object | undefined>;
   // Off Node there is no undici to find, and a page's `connect-src` would see the probe.
-  if (!hasNode || typeof fetch !== "function" || global[DISPATCHER]) return;
-  // undici makes its default agent on the first fetch; a `data:` url is one that goes nowhere.
-  await fetch("data:,");
-  const made = global[DISPATCHER] as object | undefined;
+  if (!hasNode || typeof fetch !== "function") return;
+  let made = global[DISPATCHER];
+  if (!made) {
+    // undici makes its default agent on the first fetch; a `data:` url is one that goes nowhere.
+    await fetch("data:,");
+    made = global[DISPATCHER];
+  } else if (!isDefault(made)) return;
   const Agent = made?.constructor as (new (options: object) => object) | undefined;
   if (typeof Agent !== "function" || Agent.name !== "Agent") return;
   agent = new Agent({ connect: { lookup } });
+}
+
+/**
+ * Whether a dispatcher is undici's untouched default agent, which an ESM `import "node:http"`
+ * or a first `fetch` creates on Node 22 and 24, rather than one the caller configured.
+ */
+function isDefault(dispatcher: unknown): boolean {
+  if ((dispatcher as { constructor?: { name?: string } })?.constructor?.name !== "Agent") {
+    return false;
+  }
+  const d = dispatcher as Record<symbol, Record<string, unknown>>;
+  const opt = d[Object.getOwnPropertySymbols(d).find((s) => s.description === "options")!];
+  // undici 6 leaves connect, tls and interceptors unset; undici 7 adds maxOrigins: Infinity.
+  return (
+    !!opt &&
+    Object.entries(opt).every(([k, v]) => v === undefined || (k === "maxOrigins" && v === Infinity))
+  );
 }
 
 /** What `net.connect` calls per socket: the cached answer, each family's list turned by one. */

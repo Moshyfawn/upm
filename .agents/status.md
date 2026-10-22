@@ -268,11 +268,6 @@ Unranked: take a fresh profile before choosing one. Use [perf.md](perf.md) for e
   the pool's messages. Writing the index in the worker that stored the files would take the
   first away, but only main writes an index today: decide that first. Start at `publish` in
   `src/store.ts`; the fetch thread below is the other way.
-- Through the library, a host that has imported `node:http` never gets upm's agent: on Node 22
-  and 24 an ESM import of it makes undici's default dispatcher (a `require` does not), which
-  `install` in `src/dns.ts` takes for the host's own, so its requests go through `fetch` with
-  no lookup cache. Telling a default the host never configured from one it did would fix it;
-  test from a process that imported `node:http` first, as `test/get.test.ts` explains.
 - The tarball GET (`getter` in `src/dns.ts`) uses undici's legacy handler callbacks, which
   undici 6 and 7 both call. An undici that drops them would fail every download with
   `ENETWORK`, with no fallback to `fetch`: check `test/get.test.ts` on each new Node major.
